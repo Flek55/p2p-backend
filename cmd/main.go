@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"time"
 
 	"github.com/Flek55/p2p-backend/internal/auth"
@@ -9,16 +10,22 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+
 	auth.InitDb()
 
 	exUser := auth.User{
 		ID:           uuid.New(),
-		Email:        "pipka",
-		PasswordHash: "hhhhh",
+		Email:        "popka",
+		PasswordHash: "ggggg",
 		CreatedAt:    time.Now(),
 	}
 
-	if err := auth.CreateUser(&exUser); err != nil {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+
+	defer cancel()
+
+	if err := auth.CreateUser(ctx, &exUser); err != nil {
 		panic(err)
 	}
 

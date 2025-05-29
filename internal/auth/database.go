@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"context"
 	"log"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -35,6 +37,26 @@ func GetDB() *gorm.DB {
 	return database
 }
 
-func CreateUser(user *User) error {
-	return GetDB().Create(user).Error
+func CreateUser(ctx context.Context, user *User) error {
+	return GetDB().WithContext(ctx).Create(user).Error
+}
+
+func FindUserByEmail(ctx context.Context, email string) (*User, error) {
+	var user User
+	err := GetDB().WithContext(ctx).Where("email = ?", email).First(&user).Error
+	return &user, err
+}
+
+func CreateSession(ctx context.Context, session *Session) error {
+	return GetDB().WithContext(ctx).Create(session).Error
+}
+
+func DeleteSession(ctx context.Context, session *Session) error {
+	return GetDB().WithContext(ctx).Delete(session).Error
+}
+
+func FindSessionByID(ctx context.Context, sessionID uuid.UUID) (*Session, error) {
+	var session Session
+	err := GetDB().WithContext(ctx).First(&session, "id = ?", sessionID).Error
+	return &session, err
 }

@@ -26,7 +26,7 @@ func InitDb() *gorm.DB {
 	return db
 }
 
-func getDB() *gorm.DB {
+func GetDB() *gorm.DB {
 	if database == nil {
 		database = InitDb()
 		for database == nil {

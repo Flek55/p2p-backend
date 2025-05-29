@@ -15,7 +15,7 @@ func initDsn() string {
 	return "host=" + os.Getenv("host") + " port=" + os.Getenv("port") + " user=" + os.Getenv("user") + " dbname=" + os.Getenv("dbname") + " password=" + os.Getenv("password") + " sslmode=disable"
 }
 
-func InitDb() *gorm.DB {
+func InitDb() {
 	godotenv.Load()
 	dsn := initDsn()
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -23,15 +23,18 @@ func InitDb() *gorm.DB {
 		log.Fatal(err)
 	}
 	db.AutoMigrate(&User{}, &Session{})
-	return db
+	database = db
 }
 
 func GetDB() *gorm.DB {
 	if database == nil {
-		database = InitDb()
 		for database == nil {
-			database = InitDb()
+			InitDb()
 		}
 	}
 	return database
+}
+
+func CreateUser(user *User) error {
+	return GetDB().Create(user).Error
 }

@@ -12,7 +12,7 @@ import (
 var database *gorm.DB
 
 func initDsn() string {
-	return "host=" + os.Getenv("host") + "port=" + os.Getenv("port") + "user=" + os.Getenv("user") + "dbname=" + os.Getenv("dbname") + "password=" + os.Getenv("password") + "sslmode=disable"
+	return "host=" + os.Getenv("host") + " port=" + os.Getenv("port") + " user=" + os.Getenv("user") + " dbname=" + os.Getenv("dbname") + " password=" + os.Getenv("password") + " sslmode=disable"
 }
 
 func InitDb() *gorm.DB {

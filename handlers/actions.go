@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"net/http"
-
+	"os"
 	"github.com/Flek55/p2p-backend/internal/auth"
 	"github.com/gin-gonic/gin"
 )
@@ -10,7 +10,7 @@ import (
 var service *auth.Service
 
 func init() {
-	service = auth.CreateService("hui", 300)
+	service = auth.CreateService(os.Getenv("jwt_secret"), 300)
 }
 
 type LoginAndRegisterRequest struct {

@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -20,8 +21,16 @@ type Service struct {
 	accessExpiry time.Duration
 }
 
-func CreateService(jwtSecret string, accessExpiry time.Duration) *Service {
-	return &Service{jwtSecret: []byte(jwtSecret), accessExpiry: accessExpiry}
+type CustomClaims struct {
+	UserID uuid.UUID `json:"sub"`
+	jwt.RegisteredClaims
+}
+
+func CreateService(jwtSecret string, accessExpirySeconds int) *Service {
+	return &Service{
+		jwtSecret:    []byte(jwtSecret),
+		accessExpiry: time.Duration(accessExpirySeconds) * time.Second,
+	}
 }
 
 func (s *Service) Register(ctx context.Context, email, password string) error {
@@ -74,7 +83,7 @@ func (s *Service) Login(ctx context.Context, email, password, userAgent, ip stri
 		RefreshToken: refreshToken,
 		UserAgent:    userAgent,
 		IPAddress:    ip,
-		ExpiresAt:    time.Now().Add(time.Hour * 2),
+		ExpiresAt:    time.Now().Add(time.Second * s.accessExpiry),
 		CreatedAt:    time.Now(),
 	}
 
@@ -86,10 +95,16 @@ func (s *Service) Login(ctx context.Context, email, password, userAgent, ip stri
 }
 
 func (s *Service) GenerateAccessToken(userID uuid.UUID) (string, error) {
-	claims := jwt.MapClaims{
-		"sub": userID.String(),
-		"exp": time.Now().Add(s.accessExpiry).Unix(),
-		"iat": time.Now().Unix(),
+	expirationTime := time.Now().Add(s.accessExpiry)
+	log.Printf("Generating token for user %s, expires at: %s", userID, expirationTime.Format(time.RFC3339))
+
+	claims := &CustomClaims{
+		UserID: userID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Subject:   userID.String(),
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -97,13 +112,26 @@ func (s *Service) GenerateAccessToken(userID uuid.UUID) (string, error) {
 }
 
 func (s *Service) ValidateAccessToken(tokenString string) (*jwt.Token, error) {
-	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return s.jwtSecret, nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
+		log.Printf("Valid token for user: %s", claims.UserID)
+	} else {
+		return nil, errors.New("invalid token claims")
+	}
+
+	return token, nil
 }
+
 func (s *Service) GetUserIDFromToken(tokenString string) (string, error) {
 	token, err := s.ValidateAccessToken(tokenString)
 	if err != nil {

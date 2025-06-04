@@ -8,7 +8,7 @@ import (
 	"github.com/Flek55/p2p-backend/internal/auth"
 	"github.com/Flek55/p2p-backend/internal/signaling"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )

@@ -11,24 +11,24 @@ import (
 )
 
 func main() {
-	auth.InitDb()
-
-	// Create auth service
 	jwtSecret := os.Getenv("jwt_secret")
+	auth.InitDb()
+	// Create auth service
+
 	accessExpiry := 300 * time.Second
-	authService := auth.CreateService(jwtSecret, accessExpiry)
+	authService := auth.CreateService(jwtSecret, int(accessExpiry))
 
 	// Create signaling server
 	signalingServer := signaling.NewServer()
 
 	r := gin.Default()
-	
+
 	// Existing routes
 	r.POST("/login", handlers.LoginUser(authService))
 	r.POST("/register", handlers.RegisterUser(authService))
-	
+
 	// New WebSocket route
 	r.GET("/ws", handlers.WebSocketHandler(signalingServer, authService))
-	
-	r.Run()
+
+	r.Run(":8080")
 }

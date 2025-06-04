@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"os"
+
 	"github.com/Flek55/p2p-backend/internal/auth"
 	"github.com/gin-gonic/gin"
 )
@@ -46,7 +47,7 @@ func LoginUser(c *gin.Context) {
 	})
 }
 
-func RigisterUser(c *gin.Context) {
+func RegisterUser(c *gin.Context) {
 	var req LoginAndRegisterRequest
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{

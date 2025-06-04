@@ -104,3 +104,21 @@ func (s *Service) ValidateAccessToken(tokenString string) (*jwt.Token, error) {
 		return s.jwtSecret, nil
 	})
 }
+func (s *Service) GetUserIDFromToken(tokenString string) (string, error) {
+	token, err := s.ValidateAccessToken(tokenString)
+	if err != nil {
+		return "", err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return "", errors.New("invalid token")
+	}
+
+	userID, ok := claims["sub"].(string)
+	if !ok {
+		return "", errors.New("user ID not found in token")
+	}
+
+	return userID, nil
+}
